@@ -18,6 +18,7 @@ A complete, production-ready observability stack using Docker Compose with popul
 - **🛡️ Secure**: Internal networking, authentication, encrypted communications
 - **📱 Comprehensive**: System, container, application, and network monitoring
 - **🔧 Maintainable**: Log rotation, automated cleanup, health checks
+- **🎛️ Modular**: Choose exactly which services you need
 
 ## 🛠️ Quick Start
 
@@ -33,36 +34,7 @@ git clone <repository-url>
 cd open-observality-final-boss
 ```
 
-### 2. Domain Setup
-Before deploying, you need to configure your domain DNS records:
-
-#### Required DNS Records
-```
-# Main domain
-your-domain.com         A       YOUR_SERVER_IP
-
-# Subdomains for services
-monitoring.your-domain.com    A       YOUR_SERVER_IP
-status.your-domain.com        A       YOUR_SERVER_IP
-prometheus.your-domain.com    A       YOUR_SERVER_IP
-jaeger.your-domain.com        A       YOUR_SERVER_IP
-loki.your-domain.com          A       YOUR_SERVER_IP
-
-# Optional: Wildcard record (easier management)
-*.your-domain.com       A       YOUR_SERVER_IP
-```
-
-#### Verify DNS Resolution
-```bash
-# Test DNS resolution
-nslookup your-domain.com
-nslookup monitoring.your-domain.com
-
-# Test from your server
-ping your-domain.com
-```
-
-### 3. Configure Environment
+### 2. Environment Configuration
 ```bash
 cp .env .env.local
 # Edit .env with your domain and passwords
@@ -75,7 +47,217 @@ nano .env
 - Configure email settings for alerts
 - Set up Slack webhook URL if needed
 
-#### Example .env Configuration
+### 3. Service Selection & Deployment
+
+The start script now offers multiple deployment options:
+
+#### Interactive Mode (Recommended for First-Time Users)
+```bash
+./start.sh
+```
+
+This will present you with an interactive menu to select services:
+
+```
+📦 Predefined Stacks:
+  1) 🎯 Complete Stack (All services)
+  2) 📊 Monitoring Only (Prometheus + Grafana + Core)
+  3) 📝 Logging Only (Loki + Promtail + Core)
+  4) 🔍 Tracing Only (Jaeger + OpenTelemetry + Core)
+  5) 💓 Health Monitoring (Uptime Kuma + Blackbox + Core)
+  6) 🔧 Core Infrastructure Only (nginx + PostgreSQL + Redis)
+  7) 🎛️ Custom Selection (Choose individual services)
+
+📋 Quick Stacks:
+  8) 🚀 Development (Monitoring + Logging - minimal)
+  9) 🏭 Production (Complete stack with health monitoring)
+ 10) 🔬 Debugging (Tracing + Logging + Monitoring)
+```
+
+#### Command Line Options (For Automation)
+```bash
+# Deploy complete stack
+./start.sh --complete
+
+# Deploy monitoring stack only
+./start.sh --monitoring
+
+# Deploy logging stack only
+./start.sh --logging
+
+# Deploy tracing stack only
+./start.sh --tracing
+
+# Deploy health monitoring
+./start.sh --health
+
+# Deploy core infrastructure only
+./start.sh --core
+
+# Deploy development stack (lightweight)
+./start.sh --dev
+
+# Deploy production stack (complete)
+./start.sh --prod
+
+# Deploy debugging stack
+./start.sh --debug
+
+# Deploy specific services
+./start.sh --services=nginx,prometheus,grafana,postgres
+
+# Show help
+./start.sh --help
+```
+
+#### Service Selection Examples
+
+**For Small Projects/Development:**
+```bash
+./start.sh --dev
+# Deploys: nginx, postgres, redis, prometheus, grafana, node-exporter, loki, promtail
+```
+
+**For Production Monitoring:**
+```bash
+./start.sh --monitoring
+# Deploys: nginx, postgres, redis, prometheus, grafana, alertmanager, node-exporter, cadvisor
+```
+
+**For Application Debugging:**
+```bash
+./start.sh --debug
+# Deploys: Complete monitoring + logging + tracing stack
+```
+
+**Custom Selection:**
+```bash
+./start.sh --services=nginx,prometheus,grafana
+# Deploys: Only specified services (dependencies auto-resolved)
+```
+
+### 4. Available Services
+
+| Service | Description | Dependencies |
+|---------|-------------|--------------|
+| **nginx** | Reverse proxy with SSL termination | None |
+| **postgres** | PostgreSQL database | None |
+| **redis** | Redis cache and session store | None |
+| **prometheus** | Metrics collection and storage | node-exporter, cadvisor |
+| **grafana** | Dashboards and visualization | postgres, redis |
+| **alertmanager** | Alert management and routing | postgres |
+| **node-exporter** | System metrics exporter | None |
+| **cadvisor** | Container metrics exporter | None |
+| **loki** | Log aggregation system | None |
+| **promtail** | Log collection agent | loki |
+| **jaeger** | Distributed tracing system | None |
+| **otel-collector** | OpenTelemetry data collector | jaeger, prometheus |
+| **uptime-kuma** | Uptime monitoring dashboard | None |
+| **blackbox-exporter** | Black-box monitoring | None |
+| **logrotate** | Log rotation utility | None |
+
+### 5. Access Services
+
+The available services depend on your selection. Common access points:
+
+#### Main Dashboard Access
+- **Grafana**: https://your-domain.com/grafana/ (admin/your-password)
+- **Prometheus**: https://your-domain.com/prometheus/
+- **Jaeger**: https://your-domain.com/jaeger/
+- **Uptime Kuma**: https://your-domain.com/uptime/
+- **Alertmanager**: https://your-domain.com/alertmanager/
+
+#### Subdomain Access (cleaner URLs)
+- **Monitoring Dashboard**: https://monitoring.your-domain.com/
+- **Status Page**: https://status.your-domain.com/
+- **Metrics**: https://prometheus.your-domain.com/
+- **Traces**: https://jaeger.your-domain.com/
+
+## 📦 Service Groups & Stack Templates
+
+### 🎯 Complete Stack
+**All services** - Full observability with monitoring, logging, tracing, and health checks
+```bash
+./start.sh --complete
+```
+- ✅ System monitoring (Prometheus + Grafana)
+- ✅ Log aggregation (Loki + Promtail)
+- ✅ Distributed tracing (Jaeger + OpenTelemetry)
+- ✅ Health monitoring (Uptime Kuma + Blackbox)
+- ✅ Alert management (Alertmanager)
+
+### 📊 Monitoring Stack
+**Core monitoring** - Essential metrics and dashboards
+```bash
+./start.sh --monitoring
+```
+- ✅ Prometheus metrics collection
+- ✅ Grafana dashboards
+- ✅ System & container monitoring
+- ✅ Alert management
+
+### 📝 Logging Stack
+**Log management** - Centralized logging solution
+```bash
+./start.sh --logging
+```
+- ✅ Loki log aggregation
+- ✅ Promtail log collection
+- ✅ Log rotation management
+- ✅ Core infrastructure
+
+### 🔍 Tracing Stack
+**Distributed tracing** - Application performance monitoring
+```bash
+./start.sh --tracing
+```
+- ✅ Jaeger tracing UI
+- ✅ OpenTelemetry collector
+- ✅ Request flow visualization
+- ✅ Performance analysis
+
+### 💓 Health Monitoring Stack
+**Uptime & availability** - Service health tracking
+```bash
+./start.sh --health
+```
+- ✅ Uptime Kuma dashboard
+- ✅ Blackbox monitoring
+- ✅ Service availability tracking
+- ✅ Status page
+
+### 🚀 Development Stack
+**Lightweight monitoring** - Perfect for development environments
+```bash
+./start.sh --dev
+```
+- ✅ Basic monitoring (Prometheus + Grafana)
+- ✅ Log collection (Loki + Promtail)
+- ✅ Minimal resource usage
+- ✅ Quick setup
+
+### 🔬 Debugging Stack
+**Comprehensive debugging** - When you need to troubleshoot
+```bash
+./start.sh --debug
+```
+- ✅ Full monitoring capabilities
+- ✅ Complete log aggregation
+- ✅ Distributed tracing
+- ✅ Performance analysis tools
+
+## 📋 Configuration
+
+### Environment Variables
+Key variables in `.env`:
+- `DOMAIN`: Your domain name
+- `GRAFANA_ADMIN_PASSWORD`: Grafana admin password
+- `POSTGRES_PASSWORD`: Database password
+- `REDIS_PASSWORD`: Redis password
+- `ALERT_EMAIL`: Email for alerts
+- `SLACK_WEBHOOK_URL`: Slack webhook for notifications
+
+### Example .env Configuration
 ```bash
 # Domain Configuration
 DOMAIN=monitoring.example.com
@@ -99,54 +281,6 @@ CERTBOT_STAGING=false
 ALERT_EMAIL=alerts@example.com
 SLACK_WEBHOOK_URL=https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK
 ```
-
-### 4. Deploy Stack
-```bash
-# Automated deployment (recommended)
-./start.sh
-
-# Or manual deployment
-docker compose up -d
-```
-
-The automated script will:
-- ✅ Check prerequisites
-- ✅ Validate configuration
-- ✅ Generate SSL certificates
-- ✅ Start all services
-- ✅ Display access information
-
-### 5. Access Services
-
-#### Main Dashboard Access
-- **Grafana**: https://your-domain.com/grafana/ (admin/your-password)
-- **Prometheus**: https://your-domain.com/prometheus/
-- **Jaeger**: https://your-domain.com/jaeger/
-- **Uptime Kuma**: https://your-domain.com/uptime/
-- **Alertmanager**: https://your-domain.com/alertmanager/
-
-#### Subdomain Access (cleaner URLs)
-- **Monitoring Dashboard**: https://monitoring.your-domain.com/
-- **Status Page**: https://status.your-domain.com/
-- **Metrics**: https://prometheus.your-domain.com/
-- **Traces**: https://jaeger.your-domain.com/
-- **Logs**: https://loki.your-domain.com/
-
-#### Default Credentials
-- **Grafana**: admin / [your GRAFANA_ADMIN_PASSWORD]
-- **Uptime Kuma**: Set up on first visit
-- **Other services**: No authentication required (internal access only)
-
-## 📋 Configuration
-
-### Environment Variables
-Key variables in `.env`:
-- `DOMAIN`: Your domain name
-- `GRAFANA_ADMIN_PASSWORD`: Grafana admin password
-- `POSTGRES_PASSWORD`: Database password
-- `REDIS_PASSWORD`: Redis password
-- `ALERT_EMAIL`: Email for alerts
-- `SLACK_WEBHOOK_URL`: Slack webhook for notifications
 
 ### SSL/TLS Setup
 
@@ -177,58 +311,56 @@ sudo cp /etc/letsencrypt/live/your-domain.com/privkey.pem /var/lib/docker/volume
 docker compose start nginx
 ```
 
-#### Option 2: Wildcard Certificate (Advanced)
-```bash
-# For wildcard certificates (*.your-domain.com)
-certbot certonly --manual --preferred-challenges dns \
-  -d your-domain.com -d "*.your-domain.com" \
-  --email your-email@example.com \
-  --agree-tos --no-eff-email
-
-# Follow DNS challenge instructions
-# Copy certificates as above
-```
-
-#### Option 3: Self-Signed (Development Only)
-```bash
-# Generated automatically by start.sh
-# Or manually:
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-  -keyout nginx/ssl/key.pem \
-  -out nginx/ssl/cert.pem \
-  -subj "/C=US/ST=State/L=City/O=Organization/CN=your-domain.com"
-```
-
 #### SSL Certificate Renewal
 ```bash
 # Add to crontab for automatic renewal
 0 3 * * * certbot renew --quiet && docker compose restart nginx
 ```
 
-### Custom Dashboards
-Add dashboards to `grafana/dashboards/`:
-- `system/`: System monitoring dashboards
-- `application/`: Application monitoring dashboards
-- `infrastructure/`: Infrastructure dashboards
-
 ## 🔧 Management
 
 ### Common Commands
 ```bash
-# View logs
+# View logs for specific service
 docker-compose logs -f [service-name]
 
-# Restart services
+# Restart specific service
 docker-compose restart [service-name]
 
-# Update stack
+# Update and restart stack
 docker-compose pull && docker-compose up -d
 
-# Stop stack
+# Stop all services
 docker-compose down
 
 # Stop and remove data
 docker-compose down -v
+
+# Check service status
+docker-compose ps
+
+# View resource usage
+docker stats
+```
+
+### Service-Specific Management
+
+#### Start Additional Services
+```bash
+# Add monitoring to existing logging stack
+docker-compose up -d prometheus grafana node-exporter
+
+# Add tracing to existing stack
+docker-compose up -d jaeger otel-collector
+```
+
+#### Remove Services
+```bash
+# Stop specific services
+docker-compose stop uptime-kuma blackbox-exporter
+
+# Remove stopped services
+docker-compose rm uptime-kuma blackbox-exporter
 ```
 
 ### Health Checks
@@ -236,9 +368,43 @@ docker-compose down -v
 # Check service status
 docker-compose ps
 
-# Test endpoints
+# Test specific endpoints
 curl -k https://your-domain.com/grafana/api/health
 curl -k https://your-domain.com/prometheus/-/healthy
+
+# View service logs
+docker-compose logs --tail=50 grafana
+docker-compose logs --tail=50 prometheus
+```
+
+## 🌐 Domain Configuration Guide
+
+### Step-by-Step Domain Setup
+
+#### Required DNS Records
+```
+# Main domain
+your-domain.com         A       YOUR_SERVER_IP
+
+# Subdomains for services
+monitoring.your-domain.com    A       YOUR_SERVER_IP
+status.your-domain.com        A       YOUR_SERVER_IP
+prometheus.your-domain.com    A       YOUR_SERVER_IP
+jaeger.your-domain.com        A       YOUR_SERVER_IP
+loki.your-domain.com          A       YOUR_SERVER_IP
+
+# Optional: Wildcard record (easier management)
+*.your-domain.com       A       YOUR_SERVER_IP
+```
+
+#### Verify DNS Resolution
+```bash
+# Test DNS resolution
+nslookup your-domain.com
+nslookup monitoring.your-domain.com
+
+# Test from your server
+ping your-domain.com
 ```
 
 ## 📊 Monitoring Capabilities
@@ -289,256 +455,106 @@ Configured alerts for:
 - Webhook notifications
 - Uptime Kuma integration
 
-## 🔒 Security
-
-### Network Security
-- Internal Docker networks
-- Service isolation
-- Port restrictions
-- TLS encryption
-
-### Authentication
-- Grafana user authentication
-- nginx rate limiting
-- Service-to-service authentication
-- Secret management
-
-### Data Protection
-- Encrypted communications
-- Data retention policies
-- Backup strategies
-- Log sanitization
-
-## 📈 Performance
-
-### Resource Optimization
-- Memory limits per service
-- CPU allocation
-- Disk I/O optimization
-- Network bandwidth management
-
-### Data Retention
-- Prometheus: 30 days
-- Loki: 30 days
-- Jaeger: 7 days
-- Log rotation: Daily
-
-## 🌐 Domain Configuration Guide
-
-### Step-by-Step Domain Setup
-
-#### 1. Purchase and Configure Domain
-```bash
-# 1. Purchase domain from registrar (Namecheap, GoDaddy, etc.)
-# 2. Point nameservers to your DNS provider (Cloudflare recommended)
-# 3. Configure DNS records as shown below
-```
-
-#### 2. DNS Records Configuration
-
-**For Cloudflare (Recommended)**:
-```
-Type    Name                        Content         Proxy   TTL
-A       your-domain.com             YOUR_SERVER_IP  ✅      Auto
-A       monitoring                  YOUR_SERVER_IP  ✅      Auto
-A       status                      YOUR_SERVER_IP  ✅      Auto
-A       prometheus                  YOUR_SERVER_IP  ✅      Auto
-A       jaeger                      YOUR_SERVER_IP  ✅      Auto
-A       loki                        YOUR_SERVER_IP  ✅      Auto
-```
-
-**For Other DNS Providers**:
-```
-your-domain.com                A       YOUR_SERVER_IP
-monitoring.your-domain.com     A       YOUR_SERVER_IP
-status.your-domain.com         A       YOUR_SERVER_IP
-prometheus.your-domain.com     A       YOUR_SERVER_IP
-jaeger.your-domain.com         A       YOUR_SERVER_IP
-loki.your-domain.com           A       YOUR_SERVER_IP
-```
-
-#### 3. Verify DNS Propagation
-```bash
-# Check DNS propagation (may take 24-48 hours)
-nslookup your-domain.com
-nslookup monitoring.your-domain.com
-
-# Online tools
-# https://www.whatsmydns.net/
-# https://dnschecker.org/
-```
-
-#### 4. Test Domain Resolution
-```bash
-# From your server
-ping your-domain.com
-ping monitoring.your-domain.com
-
-# Test HTTP response
-curl -I http://your-domain.com
-curl -I http://monitoring.your-domain.com
-```
-
-### VPS Provider Specific Notes
-
-#### DigitalOcean
-```bash
-# Enable firewall
-ufw allow ssh
-ufw allow 80
-ufw allow 443
-ufw enable
-
-# Configure domain in DO control panel
-# Point A records to your droplet's IP
-```
-
-#### AWS EC2
-```bash
-# Configure Security Groups
-# Allow inbound: HTTP (80), HTTPS (443), SSH (22)
-
-# Use Route 53 for DNS (optional)
-# Create hosted zone for your domain
-```
-
-#### Linode
-```bash
-# Configure Linode Firewall
-# Allow HTTP/HTTPS and SSH
-
-# Use Linode DNS Manager
-# Add domain and configure records
-```
-
-#### Hetzner
-```bash
-# Configure Hetzner Cloud Firewall
-# Allow ports 22, 80, 443
-
-# Use Hetzner DNS Console
-# Add domain and configure A records
-```
-
 ## 🛠️ Troubleshooting
 
 ### Common Issues
 
-1. **Domain not resolving**
+1. **Services won't start**
+   ```bash
+   # Check dependencies
+   ./start.sh --services=nginx,postgres,redis
+   
+   # Then add other services
+   docker-compose up -d prometheus grafana
+   ```
+
+2. **Domain not resolving**
    ```bash
    # Check DNS propagation
    nslookup your-domain.com
    dig your-domain.com
-   
-   # Test from different locations
-   # Use online DNS checker tools
    ```
 
-2. **SSL certificate issues**
+3. **SSL certificate issues**
    ```bash
-   # Check certificate status
-   openssl s_client -connect your-domain.com:443
-   
    # Regenerate self-signed cert
    rm nginx/ssl/*
-   ./start.sh
-   
-   # For Let's Encrypt issues
-   certbot renew --dry-run
+   ./start.sh --core
    ```
 
-3. **Services not starting**
+4. **Resource constraints**
    ```bash
-   # Check logs
-   docker compose logs [service-name]
+   # Use lightweight stack
+   ./start.sh --dev
    
-   # Check system resources
-   docker stats
-   
-   # Restart specific service
-   docker compose restart [service-name]
+   # Or minimal monitoring
+   ./start.sh --services=nginx,prometheus,grafana
    ```
 
-4. **Can't access services**
+5. **Service-specific issues**
    ```bash
-   # Check if ports are open
-   netstat -tlnp | grep :80
-   netstat -tlnp | grep :443
+   # Check individual service logs
+   docker-compose logs [service-name]
    
-   # Check firewall
-   ufw status
-   
-   # Test internal connectivity
-   docker compose exec nginx curl http://grafana:3000/api/health
-   ```
-
-5. **Permission issues**
-   ```bash
-   # Fix permissions
-   sudo chown -R 1000:1000 grafana/
-   sudo chown -R 65534:65534 prometheus/
-   
-   # Check volume permissions
-   docker volume inspect open-observality-final-boss_grafana_data
-   ```
-
-6. **High resource usage**
-   ```bash
-   # Check resource limits
-   docker compose config
-   
-   # Monitor resource usage
-   docker stats --no-stream
-   
-   # Adjust retention policies
-   nano prometheus/prometheus.yml
-   nano loki/loki.yml
+   # Restart problematic service
+   docker-compose restart [service-name]
    ```
 
 ### Debug Mode
-Enable debug logging:
+Enable detailed logging:
 ```bash
-# Edit .env
-LOG_LEVEL=debug
-NGINX_LOG_LEVEL=debug
+# Check service selection
+./start.sh --help
 
-# Restart stack
-docker-compose restart
+# Test with core services only
+./start.sh --core
+
+# Add services incrementally
+docker-compose up -d prometheus
+docker-compose up -d grafana
 ```
 
-## 📚 Documentation
+## 📚 Deployment Examples
 
-### Service Documentation
-- [Prometheus](https://prometheus.io/docs/)
-- [Grafana](https://grafana.com/docs/)
-- [Loki](https://grafana.com/docs/loki/)
-- [Jaeger](https://www.jaegertracing.io/docs/)
-- [Uptime Kuma](https://github.com/louislam/uptime-kuma)
+### Small Team Development
+```bash
+# Minimal monitoring for development
+./start.sh --dev
 
-### Configuration References
-- [Prometheus Configuration](prometheus/prometheus.yml)
-- [Grafana Provisioning](grafana/provisioning/)
-- [nginx Configuration](nginx/nginx.conf)
-- [Alert Rules](prometheus/rules/alerts.yml)
+# Equivalent to:
+./start.sh --services=nginx,postgres,redis,prometheus,grafana,node-exporter,loki,promtail
+```
 
-## 🤝 Contributing
+### Production Microservices
+```bash
+# Full observability for production
+./start.sh --prod
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+# Or step by step:
+./start.sh --monitoring    # Start with monitoring
+docker-compose up -d loki promtail  # Add logging
+docker-compose up -d jaeger otel-collector  # Add tracing
+```
 
-## 📄 License
+### Debugging Performance Issues
+```bash
+# Complete debugging stack
+./start.sh --debug
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+# Focus on specific areas:
+./start.sh --tracing      # For application performance
+./start.sh --logging      # For log analysis
+./start.sh --monitoring   # For resource monitoring
+```
 
-## 🆘 Support
+### Infrastructure Monitoring Only
+```bash
+# Just system monitoring
+./start.sh --monitoring
 
-- Create an issue for bug reports
-- Join discussions for questions
-- Check documentation for configuration help
-- Review logs for troubleshooting
+# Add health checks
+docker-compose up -d uptime-kuma blackbox-exporter
+```
 
 ## ✅ Quick Setup Checklist
 
@@ -549,28 +565,24 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - [ ] **Firewall**: Ports 22, 80, 443 open
 - [ ] **Environment**: `.env` file configured with your domain and passwords
 
-### DNS Records Checklist
-- [ ] `your-domain.com` → `YOUR_SERVER_IP`
-- [ ] `monitoring.your-domain.com` → `YOUR_SERVER_IP`
-- [ ] `status.your-domain.com` → `YOUR_SERVER_IP`
-- [ ] `prometheus.your-domain.com` → `YOUR_SERVER_IP`
-- [ ] `jaeger.your-domain.com` → `YOUR_SERVER_IP`
-- [ ] `loki.your-domain.com` → `YOUR_SERVER_IP`
+### Service Selection Checklist
+- [ ] **Requirements**: Identified monitoring needs (metrics, logs, traces, health)
+- [ ] **Resources**: Estimated server capacity for selected services
+- [ ] **Dependencies**: Understood service relationships and requirements
+- [ ] **Access**: Planned which dashboards and interfaces you need
 
-### Configuration Checklist
-- [ ] **Domain**: Set `DOMAIN=your-domain.com` in `.env`
-- [ ] **Passwords**: All `change_me` passwords updated
-- [ ] **Email**: Alert email configured
-- [ ] **SSL**: Production SSL certificates (Let's Encrypt recommended)
-- [ ] **Testing**: All services accessible via HTTPS
+### Deployment Options
+- [ ] **Interactive**: Use `./start.sh` for guided selection
+- [ ] **Automated**: Use `./start.sh --[option]` for scripted deployment
+- [ ] **Custom**: Use `./start.sh --services=...` for specific services
+- [ ] **Incremental**: Start with core, add services as needed
 
 ### Post-Deployment Verification
-- [ ] **Services Running**: All containers healthy (`docker compose ps`)
-- [ ] **Web Access**: All dashboards accessible via HTTPS
+- [ ] **Services Running**: All selected containers healthy (`docker compose ps`)
+- [ ] **Web Access**: All selected dashboards accessible via HTTPS
 - [ ] **SSL Valid**: No certificate warnings in browser
-- [ ] **Monitoring**: Grafana showing metrics
-- [ ] **Logging**: Loki receiving logs
-- [ ] **Alerting**: Alertmanager configuration tested
+- [ ] **Data Flow**: Metrics, logs, and traces flowing properly
+- [ ] **Alerts**: Alerting system configured and tested
 
 ### Production Hardening
 - [ ] **Passwords**: Strong, unique passwords for all services
@@ -582,13 +594,42 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ---
 
-**⚡ Ready to monitor everything?** Run `./start.sh` and start observing your infrastructure like a pro!
+## 🚀 Quick Start Commands
 
-### 🚀 One-Command Setup
+### One-Line Deployments
 ```bash
-# Complete setup with domain configuration
-DOMAIN=your-domain.com ./start.sh
+# Complete observability stack
+./start.sh --complete
+
+# Development environment
+./start.sh --dev
+
+# Production monitoring
+./start.sh --prod
+
+# Custom selection
+./start.sh --services=nginx,prometheus,grafana,loki
 ```
+
+### Interactive Setup
+```bash
+# Guided deployment with menu
+./start.sh
+```
+
+### Get Help
+```bash
+# Show all options
+./start.sh --help
+
+# Check service status
+docker-compose ps
+
+# View service logs
+docker-compose logs -f [service-name]
+```
+
+**⚡ Ready to monitor everything?** Choose your deployment option and start observing your infrastructure like a pro!
 
 ### 📞 Need Help?
 - 📖 Check the [troubleshooting guide](#troubleshooting)
