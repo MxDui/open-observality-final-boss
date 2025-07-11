@@ -1,0 +1,45 @@
+groups:
+  - name: instance_rules
+    interval: 30s
+    rules:
+      - record: node:cpu_utilization:rate5m
+        expr: 100 - (avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+      
+      - record: node:memory_utilization:percent
+        expr: 100 - ((node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) * 100)
+      
+      - record: node:disk_utilization:percent
+        expr: 100 - ((node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100)
+      
+      - record: node:network_receive_bytes:rate5m
+        expr: rate(node_network_receive_bytes_total[5m])
+      
+      - record: node:network_transmit_bytes:rate5m
+        expr: rate(node_network_transmit_bytes_total[5m])
+
+  - name: container_rules
+    interval: 30s
+    rules:
+      - record: container:cpu_usage:rate5m
+        expr: rate(container_cpu_usage_seconds_total[5m])
+      
+      - record: container:memory_usage:percent
+        expr: (container_memory_usage_bytes / container_spec_memory_limit_bytes) * 100
+      
+      - record: container:network_receive_bytes:rate5m
+        expr: rate(container_network_receive_bytes_total[5m])
+      
+      - record: container:network_transmit_bytes:rate5m
+        expr: rate(container_network_transmit_bytes_total[5m])
+
+  - name: application_rules
+    interval: 60s
+    rules:
+      - record: prometheus:tsdb_head_samples:rate5m
+        expr: rate(prometheus_tsdb_head_samples_appended_total[5m])
+      
+      - record: grafana:http_requests:rate5m
+        expr: rate(grafana_http_request_duration_seconds_count[5m])
+      
+      - record: loki:ingester_chunks:rate5m
+        expr: rate(loki_ingester_chunks_created_total[5m])

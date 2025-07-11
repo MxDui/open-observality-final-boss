@@ -1,0 +1,237 @@
+groups:
+  - name: system_alerts
+    rules:
+      - alert: NodeDown
+        expr: up{job="node-exporter"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Node is down"
+          description: "Node {{ $labels.instance }} has been down for more than 5 minutes."
+
+      - alert: HighCPUUsage
+        expr: node:cpu_utilization:rate5m > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage on {{ $labels.instance }} is above 80% for more than 5 minutes."
+
+      - alert: HighMemoryUsage
+        expr: node:memory_utilization:percent > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage on {{ $labels.instance }} is above 85% for more than 5 minutes."
+
+      - alert: DiskSpaceLow
+        expr: node:disk_utilization:percent > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space"
+          description: "Disk usage on {{ $labels.instance }} is above 85% for more than 5 minutes."
+
+      - alert: DiskSpaceCritical
+        expr: node:disk_utilization:percent > 95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical disk space"
+          description: "Disk usage on {{ $labels.instance }} is above 95% for more than 2 minutes."
+
+  - name: container_alerts
+    rules:
+      - alert: ContainerDown
+        expr: up{job="cadvisor"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container monitoring is down"
+          description: "cAdvisor has been down for more than 5 minutes."
+
+      - alert: ContainerHighCPU
+        expr: container:cpu_usage:rate5m > 0.8
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container high CPU usage"
+          description: "Container {{ $labels.name }} CPU usage is above 80% for more than 5 minutes."
+
+      - alert: ContainerHighMemory
+        expr: container:memory_usage:percent > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container high memory usage"
+          description: "Container {{ $labels.name }} memory usage is above 85% for more than 5 minutes."
+
+      - alert: ContainerRestarting
+        expr: rate(container_start_time_seconds[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container restarting"
+          description: "Container {{ $labels.name }} is restarting frequently."
+
+  - name: application_alerts
+    rules:
+      - alert: PrometheusDown
+        expr: up{job="prometheus"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus is down"
+          description: "Prometheus has been down for more than 5 minutes."
+
+      - alert: GrafanaDown
+        expr: up{job="grafana"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Grafana is down"
+          description: "Grafana has been down for more than 5 minutes."
+
+      - alert: LokiDown
+        expr: up{job="loki"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Loki is down"
+          description: "Loki has been down for more than 5 minutes."
+
+      - alert: JaegerDown
+        expr: up{job="jaeger"} == 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Jaeger is down"
+          description: "Jaeger has been down for more than 5 minutes."
+
+      - alert: AlertmanagerDown
+        expr: up{job="alertmanager"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Alertmanager is down"
+          description: "Alertmanager has been down for more than 5 minutes."
+
+  - name: database_alerts
+    rules:
+      - alert: PostgreSQLDown
+        expr: up{job="postgres"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL has been down for more than 5 minutes."
+
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been down for more than 5 minutes."
+
+      - alert: PostgreSQLTooManyConnections
+        expr: pg_stat_activity_count > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "PostgreSQL too many connections"
+          description: "PostgreSQL has more than 80 connections for more than 5 minutes."
+
+  - name: network_alerts
+    rules:
+      - alert: HighNetworkTraffic
+        expr: rate(node_network_receive_bytes_total[5m]) > 100000000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High network traffic"
+          description: "Network traffic on {{ $labels.instance }} is above 100MB/s for more than 5 minutes."
+
+      - alert: HTTPEndpointDown
+        expr: probe_success{job="blackbox-http"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "HTTP endpoint is down"
+          description: "HTTP endpoint {{ $labels.instance }} has been down for more than 5 minutes."
+
+      - alert: TCPEndpointDown
+        expr: probe_success{job="blackbox-tcp"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "TCP endpoint is down"
+          description: "TCP endpoint {{ $labels.instance }} has been down for more than 5 minutes."
+
+  - name: prometheus_alerts
+    rules:
+      - alert: PrometheusConfigurationReloadFailure
+        expr: prometheus_config_last_reload_successful != 1
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus configuration reload failure"
+          description: "Prometheus configuration reload has failed."
+
+      - alert: PrometheusTSDBReloadFailure
+        expr: prometheus_tsdb_reloads_failures_total > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus TSDB reload failure"
+          description: "Prometheus TSDB reload has failed."
+
+      - alert: PrometheusNotConnectedToAlertmanager
+        expr: prometheus_notifications_alertmanagers_discovered < 1
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus not connected to Alertmanager"
+          description: "Prometheus is not connected to any Alertmanager."
+
+      - alert: PrometheusRuleEvaluationFailure
+        expr: prometheus_rule_evaluation_failures_total > 0
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Prometheus rule evaluation failure"
+          description: "Prometheus rule evaluation has failed."
+
+      - alert: PrometheusTSDBWALCorruption
+        expr: prometheus_tsdb_wal_corruptions_total > 0
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Prometheus TSDB WAL corruption"
+          description: "Prometheus TSDB WAL corruption detected."
